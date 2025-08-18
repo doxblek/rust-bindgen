@@ -429,21 +429,21 @@ impl WithImplicitTemplateParams for syn::Type {
                 unreachable!("we resolved item through type refs")
             }
             // None of these types ever have implicit template parameters.
-            TypeKind::Void |
-            TypeKind::NullPtr |
-            TypeKind::Pointer(..) |
-            TypeKind::Reference(..) |
-            TypeKind::Int(..) |
-            TypeKind::Float(..) |
-            TypeKind::Complex(..) |
-            TypeKind::Array(..) |
-            TypeKind::TypeParam |
-            TypeKind::Opaque |
-            TypeKind::Function(..) |
-            TypeKind::Enum(..) |
-            TypeKind::ObjCId |
-            TypeKind::ObjCSel |
-            TypeKind::TemplateInstantiation(..) => None,
+            TypeKind::Void
+            | TypeKind::NullPtr
+            | TypeKind::Pointer(..)
+            | TypeKind::Reference(..)
+            | TypeKind::Int(..)
+            | TypeKind::Float(..)
+            | TypeKind::Complex(..)
+            | TypeKind::Array(..)
+            | TypeKind::TypeParam
+            | TypeKind::Opaque
+            | TypeKind::Function(..)
+            | TypeKind::Enum(..)
+            | TypeKind::ObjCId
+            | TypeKind::ObjCSel
+            | TypeKind::TemplateInstantiation(..) => None,
             _ => {
                 let params = item.used_template_params(ctx);
                 if params.is_empty() {
@@ -592,9 +592,9 @@ impl CodeGenerator for Module {
             }
         };
 
-        if !ctx.options().enable_cxx_namespaces ||
-            (self.is_inline() &&
-                !ctx.options().conservative_inline_namespaces)
+        if !ctx.options().enable_cxx_namespaces
+            || (self.is_inline()
+                && !ctx.options().conservative_inline_namespaces)
         {
             codegen_self(result, &mut false);
             return;
@@ -844,19 +844,19 @@ impl CodeGenerator for Type {
         debug_assert!(item.is_enabled_for_codegen(ctx));
 
         match *self.kind() {
-            TypeKind::Void |
-            TypeKind::NullPtr |
-            TypeKind::Int(..) |
-            TypeKind::Float(..) |
-            TypeKind::Complex(..) |
-            TypeKind::Array(..) |
-            TypeKind::Vector(..) |
-            TypeKind::Pointer(..) |
-            TypeKind::Reference(..) |
-            TypeKind::Function(..) |
-            TypeKind::ResolvedTypeRef(..) |
-            TypeKind::Opaque |
-            TypeKind::TypeParam => {
+            TypeKind::Void
+            | TypeKind::NullPtr
+            | TypeKind::Int(..)
+            | TypeKind::Float(..)
+            | TypeKind::Complex(..)
+            | TypeKind::Array(..)
+            | TypeKind::Vector(..)
+            | TypeKind::Pointer(..)
+            | TypeKind::Reference(..)
+            | TypeKind::Function(..)
+            | TypeKind::ResolvedTypeRef(..)
+            | TypeKind::Opaque
+            | TypeKind::TypeParam => {
                 // These items don't need code generation, they only need to be
                 // converted to rust types in fields, arguments, and such.
                 // NOTE(emilio): If you add to this list, make sure to also add
@@ -1020,11 +1020,11 @@ impl CodeGenerator for Type {
 
                 // We prefer using `pub use` over `pub type` because of:
                 // https://github.com/rust-lang/rust/issues/26264
-                if matches!(inner_rust_type, syn::Type::Path(_)) &&
-                    outer_params.is_empty() &&
-                    !is_opaque &&
-                    alias_style == AliasVariation::TypeAlias &&
-                    inner_item.expect_type().canonical_type(ctx).is_enum()
+                if matches!(inner_rust_type, syn::Type::Path(_))
+                    && outer_params.is_empty()
+                    && !is_opaque
+                    && alias_style == AliasVariation::TypeAlias
+                    && inner_item.expect_type().canonical_type(ctx).is_enum()
                 {
                     tokens.append_all(quote! {
                         pub use
@@ -1201,9 +1201,9 @@ impl CodeGenerator for Vtable<'_> {
         // For now, we will only generate vtables for classes that:
         // - do not inherit from others (compilers merge VTable from primary parent class).
         // - do not contain a virtual destructor (requires ordering; platforms generate different vtables).
-        if ctx.options().vtable_generation &&
-            self.comp_info.base_members().is_empty() &&
-            self.comp_info.destructor().is_none()
+        if ctx.options().vtable_generation
+            && self.comp_info.base_members().is_empty()
+            && self.comp_info.destructor().is_none()
         {
             let class_ident = ctx.rust_ident(self.item_id.canonical_name(ctx));
 
@@ -1792,8 +1792,8 @@ impl FieldCodegen<'_> for BitfieldUnit {
                 continue;
             }
 
-            if layout.size > RUST_DERIVE_IN_ARRAY_LIMIT &&
-                !ctx.options().rust_features().larger_arrays
+            if layout.size > RUST_DERIVE_IN_ARRAY_LIMIT
+                && !ctx.options().rust_features().larger_arrays
             {
                 continue;
             }
@@ -2395,10 +2395,10 @@ impl CodeGenerator for CompInfo {
 
         // if a type has both a "packed" attribute and an "align(N)" attribute, then check if the
         // "packed" attr is redundant, and do not include it if so.
-        if packed &&
-            !is_opaque &&
-            !(explicit_align.is_some() &&
-                self.already_packed(ctx).unwrap_or(false))
+        if packed
+            && !is_opaque
+            && !(explicit_align.is_some()
+                && self.already_packed(ctx).unwrap_or(false))
         {
             let n = layout.map_or(1, |l| l.align);
             assert!(ctx.options().rust_features().repr_packed_n || n == 1);
@@ -2439,32 +2439,32 @@ impl CodeGenerator for CompInfo {
 
         let derivable_traits = derives_of_item(item, ctx, packed);
         if !derivable_traits.contains(DerivableTraits::DEBUG) {
-            needs_debug_impl = ctx.options().derive_debug &&
-                ctx.options().impl_debug &&
-                !ctx.no_debug_by_name(item) &&
-                !item.annotations().disallow_debug();
+            needs_debug_impl = ctx.options().derive_debug
+                && ctx.options().impl_debug
+                && !ctx.no_debug_by_name(item)
+                && !item.annotations().disallow_debug();
         }
 
         if !derivable_traits.contains(DerivableTraits::DEFAULT) {
-            needs_default_impl = ctx.options().derive_default &&
-                !self.is_forward_declaration() &&
-                !ctx.no_default_by_name(item) &&
-                !item.annotations().disallow_default();
+            needs_default_impl = ctx.options().derive_default
+                && !self.is_forward_declaration()
+                && !ctx.no_default_by_name(item)
+                && !item.annotations().disallow_default();
         }
 
         let all_template_params = item.all_template_params(ctx);
 
-        if derivable_traits.contains(DerivableTraits::COPY) &&
-            !derivable_traits.contains(DerivableTraits::CLONE)
+        if derivable_traits.contains(DerivableTraits::COPY)
+            && !derivable_traits.contains(DerivableTraits::CLONE)
         {
             needs_clone_impl = true;
         }
 
         if !derivable_traits.contains(DerivableTraits::PARTIAL_EQ) {
-            needs_partialeq_impl = ctx.options().derive_partialeq &&
-                ctx.options().impl_partialeq &&
-                ctx.lookup_can_derive_partialeq_or_partialord(item.id()) ==
-                    CanDerive::Manually;
+            needs_partialeq_impl = ctx.options().derive_partialeq
+                && ctx.options().impl_partialeq
+                && ctx.lookup_can_derive_partialeq_or_partialord(item.id())
+                    == CanDerive::Manually;
         }
 
         let mut derives: Vec<_> = derivable_traits.into();
@@ -2646,8 +2646,8 @@ impl CodeGenerator for CompInfo {
                             .collect()
                     };
 
-                    let uninit_decl = if check_field_offset.is_empty() ||
-                        compile_time
+                    let uninit_decl = if check_field_offset.is_empty()
+                        || compile_time
                     {
                         None
                     } else {
@@ -2993,11 +2993,11 @@ impl Method {
             let cc = &ctx.options().codegen_config;
             match self.kind() {
                 MethodKind::Constructor => cc.constructors(),
-                MethodKind::Destructor |
-                MethodKind::VirtualDestructor { .. } => cc.destructors(),
-                MethodKind::Static |
-                MethodKind::Normal |
-                MethodKind::Virtual { .. } => cc.methods(),
+                MethodKind::Destructor
+                | MethodKind::VirtualDestructor { .. } => cc.destructors(),
+                MethodKind::Static
+                | MethodKind::Normal
+                | MethodKind::Virtual { .. } => cc.methods(),
             }
         });
 
@@ -3517,8 +3517,8 @@ impl EnumBuilder {
                 }
                 variants
             }
-            EnumBuilderKind::Consts { .. } |
-            EnumBuilderKind::ModuleConsts { .. } => {
+            EnumBuilderKind::Consts { .. }
+            | EnumBuilderKind::ModuleConsts { .. } => {
                 let mut variants = vec![];
 
                 for v in self.enum_variants {
@@ -3640,8 +3640,8 @@ impl CodeGenerator for Enum {
         let repr_translated;
         let repr = match self.repr().map(|repr| ctx.resolve_type(repr)) {
             Some(repr)
-                if !ctx.options().translate_enum_integer_types &&
-                    !variation.is_rust() =>
+                if !ctx.options().translate_enum_integer_types
+                    && !variation.is_rust() =>
             {
                 repr
             }
@@ -3712,10 +3712,10 @@ impl CodeGenerator for Enum {
             // Clone/Eq/PartialEq/Hash, even if we don't generate those by
             // default.
             derives.insert(
-                DerivableTraits::CLONE |
-                    DerivableTraits::HASH |
-                    DerivableTraits::PARTIAL_EQ |
-                    DerivableTraits::EQ,
+                DerivableTraits::CLONE
+                    | DerivableTraits::HASH
+                    | DerivableTraits::PARTIAL_EQ
+                    | DerivableTraits::EQ,
             );
             let mut derives: Vec<_> = derives.into();
             for derive in item.annotations().derives() {
@@ -3856,8 +3856,8 @@ impl CodeGenerator for Enum {
                 Entry::Occupied(ref entry) => {
                     if variation.is_rust() {
                         let variant_name = ctx.rust_mangle(variant.name());
-                        let mangled_name = if is_toplevel ||
-                            enum_ty.name().is_some()
+                        let mangled_name = if is_toplevel
+                            || enum_ty.name().is_some()
                         {
                             variant_name
                         } else {
@@ -3916,8 +3916,8 @@ impl CodeGenerator for Enum {
                     // If it's an unnamed enum, or constification is enforced,
                     // we also generate a constant so it can be properly
                     // accessed.
-                    if (variation.is_rust() && enum_ty.name().is_none()) ||
-                        variant.force_constification()
+                    if (variation.is_rust() && enum_ty.name().is_none())
+                        || variant.force_constification()
                     {
                         let mangled_name = if is_toplevel {
                             variant_name.clone()
@@ -4360,16 +4360,17 @@ impl TryToRustTy for Type {
                 inst.try_to_rust_ty(ctx, item)
             }
             TypeKind::ResolvedTypeRef(inner) => inner.try_to_rust_ty(ctx, &()),
-            TypeKind::TemplateAlias(..) |
-            TypeKind::Alias(..) |
-            TypeKind::BlockPointer(..) => {
+            TypeKind::TemplateAlias(..)
+            | TypeKind::Alias(..)
+            | TypeKind::BlockPointer(..) => {
                 if self.is_block_pointer() && !ctx.options().generate_block {
                     let void = c_void(ctx);
                     return Ok(void.to_ptr(/* is_const = */ false));
                 }
 
-                if item.is_opaque(ctx, &()) &&
-                    item.used_template_params(ctx)
+                if item.is_opaque(ctx, &())
+                    && item
+                        .used_template_params(ctx)
                         .into_iter()
                         .any(|param| param.is_template_param(ctx, &()))
                 {
@@ -4385,8 +4386,8 @@ impl TryToRustTy for Type {
             }
             TypeKind::Comp(ref info) => {
                 let template_params = item.all_template_params(ctx);
-                if info.has_non_type_template_params() ||
-                    (item.is_opaque(ctx, &()) && !template_params.is_empty())
+                if info.has_non_type_template_params()
+                    || (item.is_opaque(ctx, &()) && !template_params.is_empty())
                 {
                     return self.try_to_opaque(ctx, item);
                 }
@@ -4717,28 +4718,29 @@ impl CodeGenerator for Function {
         // Unfortunately this can't piggyback on the `attributes` list because
         // the #[link(wasm_import_module)] needs to happen before the `extern
         // "C"` block. It doesn't get picked up properly otherwise
-        let link_attribute = match (
-            ctx.options().wasm_import_module_name.as_ref(),
-            &ctx.options().windows_link_as_raw_dylib,
-        ) {
-            (Some(_), (Some(_), _)) => {
-                panic!("Cannot link against a wasm import module and a raw dylib at the same time");
+        let mut link_attribute = quote! {};
+        if let Some(ref wasm_name) = ctx.options().wasm_import_module_name {
+            link_attribute.extend(quote! {
+                #[link(wasm_import_module = #wasm_name)]
+            });
+        }
+        if let (Some(ref windows_name), verbatim) =
+            ctx.options().windows_link_as_raw_dylib
+        {
+            if verbatim {
+                link_attribute.extend(quote! {
+                    #[cfg_attr(windows, link(name = #windows_name, kind = "raw-dylib", modifiers = "+verbatim"))]
+                });
+            } else {
+                link_attribute.extend(quote! {
+                    #[cfg_attr(windows, link(name = #windows_name, kind = "raw-dylib"))]
+                });
             }
-            (Some(name), (None, _)) => {
-                Some(quote! { #[link(wasm_import_module = #name)] })
-            }
-            (None, (Some(name), false)) => Some(
-                quote! { #[cfg_attr(windows, link(name = #name, kind = "raw-dylib"))] },
-            ),
-            (None, (Some(name), true)) => Some(
-                quote! { #[cfg_attr(windows, link(name = #name, kind = "raw-dylib", modifiers = "+verbatim"))] },
-            ),
-            _ => None,
-        };
+        }
 
-        let should_wrap = is_internal &&
-            ctx.options().wrap_static_fns &&
-            link_name_attr.is_none();
+        let should_wrap = is_internal
+            && ctx.options().wrap_static_fns
+            && link_name_attr.is_none();
 
         if should_wrap {
             let name = canonical_name.clone() + ctx.wrap_static_fns_suffix();
@@ -5282,8 +5284,8 @@ pub(crate) mod utils {
             std::fs::create_dir_all(dir)?;
         }
 
-        let is_cpp = args_are_cpp(&context.options().clang_args) ||
-            context
+        let is_cpp = args_are_cpp(&context.options().clang_args)
+            || context
                 .options()
                 .input_headers
                 .iter()
@@ -5381,8 +5383,8 @@ pub(crate) mod utils {
         ctx: &BindgenContext,
         result: &mut Vec<proc_macro2::TokenStream>,
     ) {
-        if ctx.options().blocklisted_items.matches(BITFIELD_UNIT) ||
-            ctx.options().blocklisted_types.matches(BITFIELD_UNIT)
+        if ctx.options().blocklisted_items.matches(BITFIELD_UNIT)
+            || ctx.options().blocklisted_types.matches(BITFIELD_UNIT)
         {
             return;
         }
